@@ -1,0 +1,84 @@
+services:
+  # ─────────────────────────────────────────────
+  # Next.js Application (frontend + API)
+  # ─────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      target: dev
+    container_name: citi-prep-app
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/citizenprep
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-local_dev_secret_please_change}
+      NEXTAUTH_URL: http://localhost:3000
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: development
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # PostgreSQL Database
+  # ─────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: citi-prep-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: citizenprep
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d citizenprep"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 10s
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # Redis (rate limiting & caching)
+  # ─────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: citi-prep-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # Adminer — Database viewer (http://localhost:8080)
+  # Login: server=postgres, user=postgres, pass=postgres, db=citizenprep
+  # ─────────────────────────────────────────────
+  adminer:
+    image: adminer:latest
+    container_name: citi-prep-adminer
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+

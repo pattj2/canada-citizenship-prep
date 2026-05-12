@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum QuestionType {
+  MCQ
+  TRUE_FALSE
+  FILL_BLANK
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuizMode {
+  PRACTICE
+  EXAM
+  FLASHCARD
+  LEARN
+}
+
+// ─────────────────────────────────────────────
+// User (username-only auth — no password)
+// ─────────────────────────────────────────────
+
+model User {
+  id           String        @id @default(cuid())
+  username     String        @unique
+  role         Role          @default(STUDENT)
+  createdAt    DateTime      @default(now())
+  quizSessions QuizSession[]
+  achievements Achievement[]
+  streak       DailyStreak?
+}
+
+// ─────────────────────────────────────────────
+// Study Content
+// ─────────────────────────────────────────────
+
+model Topic {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String
+  order       Int        @default(0)
+  questions   Question[]
+}
+
+model Question {
+  id          String       @id @default(cuid())
+  topicId     String
+  topic       Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  text        String
+  type        QuestionType
+  difficulty  Difficulty
+  explanation String
+  sourceRef   String
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  answers     Answer[]
+  quizAnswers QuizAnswer[]
+}
+
+model Answer {
+  id          String       @id @default(cuid())
+  questionId  String
+  question    Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text        String
+  isCorrect   Boolean
+  quizAnswers QuizAnswer[]
+}
+
+// ─────────────────────────────────────────────
+// Quiz Sessions & Answers
+// ─────────────────────────────────────────────
+
+model QuizSession {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mode           QuizMode
+  topicId        String?
+  startedAt      DateTime     @default(now())
+  completedAt    DateTime?
+  score          Int?
+  totalQuestions Int          @default(0)
+  passed         Boolean?
+  quizAnswers    QuizAnswer[]
+}
+
+model QuizAnswer {
+  id               String      @id @default(cuid())
+  sessionId        String
+  session          QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionId       String
+  question         Question    @relation(fields: [questionId], references: [id])
+  selectedAnswerId String?
+  selectedAnswer   Answer?     @relation(fields: [selectedAnswerId], references: [id])
+  textAnswer       String?
+  isCorrect        Boolean
+  timeSpentMs      Int         @default(0)
+}
+
+// ─────────────────────────────────────────────
+// Dynamic Leaders (editable by admin)
+// ─────────────────────────────────────────────
+
+model Leader {
+  id           String   @id @default(cuid())
+  title        String   // e.g. "Prime Minister of Canada"
+  name         String
+  jurisdiction String   // e.g. "Canada", "Alberta"
+  partyOrRole  String?
+  since        String?
+  updatedAt    DateTime @updatedAt
+  updatedBy    String?
+}
+
+// ─────────────────────────────────────────────
+// Progress & Gamification
+// ─────────────────────────────────────────────
+
+model Achievement {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type     String   // e.g. "FIRST_QUIZ", "PERFECT_SCORE", "STREAK_7"
+  earnedAt DateTime @default(now())
+}
+
+model DailyStreak {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStreak  Int      @default(0)
+  longestStreak  Int      @default(0)
+  lastActiveDate DateTime @default(now())
+}

@@ -1,0 +1,39 @@
+{
+  "name": "Canada Citizenship Prep",
+  "short_name": "CitiPrep",
+  "description": "Prepare for the Canadian citizenship test with interactive practice questions from the official Discover Canada guide.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#d52b1e",
+  "orientation": "portrait",
+  "categories": ["education"],
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Start Practice",
+      "url": "/study/practice",
+      "description": "Jump into a practice session"
+    },
+    {
+      "name": "Take Exam",
+      "url": "/study/exam",
+      "description": "Start an exam simulation"
+    }
+  ]
+}
