@@ -2126,6 +2126,13 @@ const leadersData = [
     partyOrRole: 'Representative of the King',
     since: '2020',
   },
+  {
+    title: 'Mayor of Edmonton',
+    name: 'Amarjeet Sohi',
+    jurisdiction: 'Edmonton',
+    partyOrRole: 'Municipal Government',
+    since: '2021',
+  },
 ]
 
 // ─────────────────────────────────────────────
